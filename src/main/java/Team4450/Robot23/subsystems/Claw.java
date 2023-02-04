@@ -35,6 +35,8 @@ public class Claw extends SubsystemBase {
     // Ties in a double value (as a percentage) to the name, which is taken from the
     // ClawState enum
     public Claw() {
+        // make FULLY_OPEN instead go until it hits a switch, then stop and set encoder count to 0
+        // make it use a PID loop to make sure it doesn't go too far + goes to target location
         clawStates.put(ClawState.FULLY_OPEN, 0.0);
         clawStates.put(ClawState.HOLDING_CUBE, 0.2);
         clawStates.put(ClawState.HOLDING_CONE, 0.6);
@@ -60,6 +62,7 @@ public class Claw extends SubsystemBase {
     }
 
     private void changeState(ClawState clawState) {
+        // This sets power, change it to a PID loop
         clawMotor.set(ControlMode.Position, clawStates.get(clawState) * encoderMultiplier);
 
         currentClawState = clawState;
