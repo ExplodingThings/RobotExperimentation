@@ -17,9 +17,13 @@ import Team4450.Robot23.commands.TankDrive;
 import Team4450.Robot23.commands.Utility.NotifierCommand;
 import Team4450.Robot23.commands.autonomous.AutoAdam;
 import Team4450.Robot23.commands.autonomous.AutoPathPlanner;
+import Team4450.Robot23.commands.autonomous.AutoTester;
 import Team4450.Robot23.commands.autonomous.DriveOut;
 import Team4450.Robot23.commands.autonomous.ShootFirst;
+import Team4450.Robot23.commands.autonomous.AutoDrive.Pid;
+import Team4450.Robot23.subsystems.Arm;
 import Team4450.Robot23.subsystems.Channel;
+import Team4450.Robot23.subsystems.Claw;
 import Team4450.Robot23.subsystems.Climber;
 import Team4450.Robot23.subsystems.DriveBase;
 import Team4450.Robot23.subsystems.Pickup;
@@ -58,6 +62,8 @@ public class RobotContainer
 	public static Pickup		pickup;
 	public static Shooter		shooter;
 	public static Climber		climber;
+	public static Claw 			claw;
+	public static Arm			arm;
 
 	// Subsystem Default Commands.
 
@@ -112,7 +118,8 @@ public class RobotContainer
 		DriveOut,
 		ShootFirst,
 		AutoAdam,
-		AutoPathPlanner
+		AutoPathPlanner,
+		AutoTester
 	}
 
 	// Classes to access drop down lists on Driver Station.
@@ -178,6 +185,8 @@ public class RobotContainer
         shooter = new Shooter(channel);
         pickup = new Pickup();
 		climber = new Climber();
+		claw = new Claw(0.0, Pid.on);
+		arm = new Arm();
 
 		// Create any persistent commands.
 
@@ -393,6 +402,10 @@ public class RobotContainer
 			case AutoPathPlanner:
 				autoCommand = new AutoPathPlanner(driveBase, startingPose);
 				break;
+
+			case AutoTester:
+				autoCommand = new AutoTester(driveBase, startingPose, claw, arm);
+				break;
 		}
         
         // Reset motor deadband for auto.
@@ -416,6 +429,7 @@ public class RobotContainer
 		autoChooser.addOption("Shoot First", AutoProgram.ShootFirst);		
 		autoChooser.addOption("Auto Adam", AutoProgram.AutoAdam);
 		autoChooser.addOption("Auto Path Planner", AutoProgram.AutoPathPlanner);
+		autoChooser.addOption("Auto Tester", AutoProgram.AutoTester);
 				
 		SmartDashboard.putData(autoChooser);
 	}

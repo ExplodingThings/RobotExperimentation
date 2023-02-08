@@ -1,45 +1,52 @@
 package Team4450.Robot23.subsystems;
 
-import static Team4450.Robot23.Constants.*;
+// import static Team4450.Robot23.Constants.*;
 
 import java.util.HashMap;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
+// import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
+import Team4450.Lib.FXEncoder;
+// import Team4450.Lib.SRXMagneticEncoderRelative;
+import Team4450.Lib.SynchronousPID;
 import Team4450.Lib.Util;
+import Team4450.Robot23.commands.autonomous.AutoDrive.Pid;
+// import edu.wpi.first.hal.EncoderJNI;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Claw extends SubsystemBase {
-    // Don't know device number, currently temp value
-    private WPI_TalonFX clawMotor = new WPI_TalonFX(0);
+    private WPI_TalonFX clawMotor = new WPI_TalonFX(0); // placeholder deviceNumber value
+    private FXEncoder clawMotorEncoder = new FXEncoder(clawMotor);
 
-    // Names the different claw motor positions
-    public enum ClawState {
+    double power;
+    double elapsedTime;
+
+    public enum ClawState { // Names the different claw motor positions
         FULLY_OPEN, HOLDING_CUBE, HOLDING_CONE
     }
 
-    // Used for SmartDashboard
-    ClawState currentClawState;
+    private ClawState currentClawState; // Used for SmartDashboard
 
-    // Creates a hash map to store the names of the positions and give the a value,
-    // which is set in the constructor
-    HashMap<ClawState, Double> clawStates = new HashMap<ClawState, Double>();
+    // Creates a hash map to store the names of the positions and give them a target
+    // encoder value, which is set in the constructor
+    private HashMap<ClawState, Integer> clawStates = new HashMap<ClawState, Integer>();
 
-    // Used to multiply the percentage (shown as double) into amount of rotations to
-    // get to designated position
-    int encoderMultiplier = 10;
+    private int encoderCount;
 
-    // Ties in a double value (as a percentage) to the name, which is taken from the
-    // ClawState enum
-    public Claw() {
-        // make FULLY_OPEN instead go until it hits a switch, then stop and set encoder count to 0
-        // make it use a PID loop to make sure it doesn't go too far + goes to target location
-        clawStates.put(ClawState.FULLY_OPEN, 0.0);
-        clawStates.put(ClawState.HOLDING_CUBE, 0.2);
-        clawStates.put(ClawState.HOLDING_CONE, 0.6);
+    private Pid pid;
+    private SynchronousPID pidController = null;
+
+    private double kP = .0003, kI = .0003, kD = 0; // Stolen from AutoDrive, may be wrong
+
+    public Claw(double power, Pid pid) {
+        clawStates.put(ClawState.HOLDING_CUBE, 20); // placeholder encoder count value
+        clawStates.put(ClawState.HOLDING_CONE, 60); // placeholder encoder count value
+
+        this.pid = pid;
+        this.power = power;
     }
 
     @Override
@@ -48,7 +55,7 @@ public class Claw extends SubsystemBase {
     }
 
     public void initialize() {
-        changeState(ClawState.FULLY_OPEN);
+        changeClawState(ClawState.FULLY_OPEN);
 
         updateDS();
     }
@@ -61,10 +68,43 @@ public class Claw extends SubsystemBase {
         SmartDashboard.putString("Current claw state: ", currentClawState.toString());
     }
 
-    private void changeState(ClawState clawState) {
-        // This sets power, change it to a PID loop
-        clawMotor.set(ControlMode.Position, clawStates.get(clawState) * encoderMultiplier);
+    // Called upon hitting the physical "fully open" button to reset encoders and
+    // prevent moving further
+    public void resetEncoderCount() {
+        clawMotor.set(0);
+        encoderCount = 0;
+    }
 
+    // Changes claw state based on target encoder count inside the HashMap to the
+    // relative ClawState
+    public void changeClawState(ClawState clawState) {
         currentClawState = clawState;
+
+        double minimumSpeed = 0;
+        if (clawState == ClawState.FULLY_OPEN)
+            minimumSpeed = -0.1f; // So it doesn't stop too early if encoder count is not far enough, but if it is
+                                  // too far the motor is slow enough to stop nearly instantly
+
+        // Create a PID thing to control motor (Currently entirely stolen from
+        // AutoDrive, may be wrong)
+        if (pid == Pid.on) {
+            pidController = new SynchronousPID(kP, kI, kD);
+
+            if (power < 0) {
+                pidController.setSetpoint(-encoderCount);
+                pidController.setOutputRange(power, 0);
+            } else {
+                pidController.setSetpoint(encoderCount);
+                pidController.setOutputRange(0, power);
+
+                elapsedTime = Util.getElaspedTime();
+
+                power = pidController.calculate(clawMotorEncoder.get(), elapsedTime);
+            }
+        }
+
+        if (Math.abs(clawMotor.get()) < minimumSpeed) // To prevent the robot from stopping early if encoder count is
+                                                      // wrong
+            clawMotor.set(minimumSpeed);
     }
 }
