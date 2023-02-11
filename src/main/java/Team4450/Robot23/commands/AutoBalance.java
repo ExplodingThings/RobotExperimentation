@@ -21,8 +21,8 @@ public class AutoBalance extends CommandBase {
     }
 
     private void recalibrateRotation() {
-        double pitch = RobotContainer.navx.getAHRS().getPitch();
-        double yaw = RobotContainer.navx.getAHRS().getYaw();
+        pitch = RobotContainer.navx.getAHRS().getPitch();
+        yaw = RobotContainer.navx.getAHRS().getYaw();
     }
 
     // USING WHILES BECAUSE WE DONT WANT IT TO CONTINUE UNTIL THAT STAGE IS FINISHED
