@@ -1,6 +1,7 @@
 package Team4450.Robot23.subsystems;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.revrobotics.CANSparkMax;
 
 import Team4450.Lib.FXEncoder;
 // import Team4450.Lib.SynchronousPID;
@@ -16,6 +17,8 @@ public class Arm extends SubsystemBase {
     private FXEncoder extensionMotorEncoder = new FXEncoder(extensionMotor);
     private WPI_TalonFX rotationMotor = new WPI_TalonFX(0);
     private FXEncoder rotationMotorEncoder = new FXEncoder(rotationMotor);
+    // private CANSparkMax extensionMotor = new CANSparkMax(0, null);
+    // private CANSparkMax rotationMotor = new CANSparkMax(0, null);
 
     private double extensionPower, rotationPower; // Debugging purposes
 

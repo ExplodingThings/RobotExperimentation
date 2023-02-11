@@ -4,6 +4,8 @@ package Team4450.Robot23.subsystems;
 
 import java.util.HashMap;
 
+import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 // import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
@@ -18,8 +20,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Claw extends SubsystemBase {
-    private WPI_TalonFX clawMotor = new WPI_TalonFX(0); // placeholder deviceNumber value
-    private FXEncoder clawMotorEncoder = new FXEncoder(clawMotor);
+    private TalonFX clawMotor = new TalonFX(0); // placeholder deviceNumber value
+    private FXEncoder clawMotorEncoder = new FXEncoder();
 
     double power;
     double elapsedTime;
@@ -71,7 +73,7 @@ public class Claw extends SubsystemBase {
     // Called upon hitting the physical "fully open" button to reset encoders and
     // prevent moving further
     public void resetEncoderCount() {
-        clawMotor.set(0);
+        clawMotor.set(TalonFXControlMode.PercentOutput, 0);
         encoderCount = 0;
     }
 
@@ -85,8 +87,8 @@ public class Claw extends SubsystemBase {
             minimumSpeed = -0.1f; // So it doesn't stop too early if encoder count is not far enough, but if it is
                                   // too far the motor is slow enough to stop nearly instantly
 
-        // Create a PID thing to control motor (Currently entirely stolen from
-        // AutoDrive, may be wrong)
+        // Create a PID to control the motor (Currently entirely stolen from AutoDrive,
+        // may be wrong)
         if (pid == Pid.on) {
             pidController = new SynchronousPID(kP, kI, kD);
 
@@ -103,8 +105,7 @@ public class Claw extends SubsystemBase {
             }
         }
 
-        if (Math.abs(clawMotor.get()) < minimumSpeed) // To prevent the robot from stopping early if encoder count is
-                                                      // wrong
-            clawMotor.set(minimumSpeed);
+        if (Math.abs(power) < minimumSpeed)
+            clawMotor.set(TalonFXControlMode.PercentOutput, minimumSpeed);
     }
 }
