@@ -2,6 +2,7 @@ package Team4450.Robot23.subsystems;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel;
 
 import Team4450.Lib.FXEncoder;
 // import Team4450.Lib.SynchronousPID;
@@ -12,16 +13,19 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Arm extends SubsystemBase {
-    // Motors are assumed, port is placeholder
+    // pseudo motors and port. CANSparkMax is what we are actually using, but I do not know the encoders
     private WPI_TalonFX extensionMotor = new WPI_TalonFX(0);
     private FXEncoder extensionMotorEncoder = new FXEncoder(extensionMotor);
     private WPI_TalonFX rotationMotor = new WPI_TalonFX(0);
     private FXEncoder rotationMotorEncoder = new FXEncoder(rotationMotor);
-    // private CANSparkMax extensionMotor = new CANSparkMax(0, null);
-    // private CANSparkMax rotationMotor = new CANSparkMax(0, null);
+
+    // Actual motors
+    private CANSparkMax CANextensionMotor = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
+    private CANSparkMax CANrotationMotor = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
 
     private double extensionPower, rotationPower; // Debugging purposes
 
+    // PLACEHOLDER VALUES
     private int minExtensionEncoderCount = 0, maxExtensionEncoderCount = 100, currentExtensionEncoderCount;
     private int minRotationEncoderCount = 0, maxRotationEncoderCount = 100, currentRotationEncoderCount;
 

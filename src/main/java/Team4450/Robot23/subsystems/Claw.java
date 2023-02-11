@@ -7,7 +7,7 @@ import java.util.HashMap;
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 // import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+// import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 import Team4450.Lib.FXEncoder;
 // import Team4450.Lib.SRXMagneticEncoderRelative;

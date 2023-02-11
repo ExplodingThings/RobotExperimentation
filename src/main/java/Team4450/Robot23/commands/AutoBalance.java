@@ -30,17 +30,20 @@ public class AutoBalance extends CommandBase {
     public void resetYaw() {
         recalibrateRotation();
         double rotationTarget = 0;
+        boolean calculateRotation = false;
 
         // While the robot rotation is not a multiple of 180 (this will either be 0 or
         // 180, as 360 reverts back to 0) continue rotation
-        while (Math.abs(yaw) % 180 != 0) {
-            // if closer to 180, move to 180, else to 0
-            rotationTarget = pidController.calculate((yaw > 90 && yaw < 270) ? yaw + 180 : yaw, Util.getElaspedTime());
+        while (Math.abs(yaw) % 180 != 0)
+            if (calculateRotation) {
+                // if closer to 180, move to 180, else to 0
+                rotationTarget = pidController.calculate((yaw > 90 && yaw < 270) ? yaw + 180 : yaw,
+                        Util.getElaspedTime());
 
-            driveBase.curvatureDrive(0, rotationTarget, true);
+                driveBase.curvatureDrive(0, rotationTarget, true);
 
-            recalibrateRotation();
-        }
+                recalibrateRotation();
+            }
 
         // Stops all the driveBase motors which prevents further rotation in case they
         // are not fully stopped
