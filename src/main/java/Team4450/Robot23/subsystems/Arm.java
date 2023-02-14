@@ -3,6 +3,7 @@ package Team4450.Robot23.subsystems;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
+import com.revrobotics.RelativeEncoder;
 
 import Team4450.Lib.FXEncoder;
 // import Team4450.Lib.SynchronousPID;
@@ -13,7 +14,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Arm extends SubsystemBase {
-    // pseudo motors and port. CANSparkMax is what we are actually using, but I do not know the encoders
+    // pseudo motors and port. CANSparkMax is what we are actually using, but I do
+    // not know the encoders
     private WPI_TalonFX extensionMotor = new WPI_TalonFX(0);
     private FXEncoder extensionMotorEncoder = new FXEncoder(extensionMotor);
     private WPI_TalonFX rotationMotor = new WPI_TalonFX(0);
@@ -21,7 +23,9 @@ public class Arm extends SubsystemBase {
 
     // Actual motors
     private CANSparkMax CANextensionMotor = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
+    private RelativeEncoder CANextensionEncoder = CANextensionMotor.getEncoder();
     private CANSparkMax CANrotationMotor = new CANSparkMax(0, CANSparkMaxLowLevel.MotorType.kBrushless);
+    private RelativeEncoder CANrotationEncoder = CANrotationMotor.getEncoder();
 
     private double extensionPower, rotationPower; // Debugging purposes
 
@@ -54,51 +58,59 @@ public class Arm extends SubsystemBase {
         SmartDashboard.putNumber("Current rotation power is ", rotationPower);
     }
 
-    // Slowly moves torward button, intended to be called on initilize to fix any
+    // Slowly moves torward touch sensor, intended to be called on initilize to fix any
     // error if the arm and rotation are in the wrong place
     public void resetToZero() {
         extensionMotor.set(-0.1);
         rotationMotor.set(-0.1);
     }
 
-    // Most likely called upon hitting a button
+    // Most likely called upon hitting a touch sensor
     public void resetMovementEncoderCount() {
+        extensionMotor.set(0);
         currentExtensionEncoderCount = 0;
 
         updateDS();
     }
 
-    // Most likely called upon hitting a button
+    // Most likely called upon hitting a touch sensor
     public void resetRotationEncoderCount() {
+        rotationMotor.set(0);
         currentRotationEncoderCount = 0;
 
         updateDS();
     }
 
     public void extendArm(double power) {
-        extensionMotor.set(power);
-        extensionPower = power;
-
         currentExtensionEncoderCount = extensionMotorEncoder.get();
 
-        // So the motor does not go below minimum encoders or above maximum encoders
-        if ((minExtensionEncoderCount >= currentExtensionEncoderCount && extensionMotor.get() < 0)
-                || (maxExtensionEncoderCount <= currentExtensionEncoderCount && extensionMotor.get() > 0))
-            extensionMotor.set(0);
+        // If the arm is trying to extend forward, but its at the maximum (or above the
+        // maximum) encoder count, it stops. It also checks for the opposite, where its
+        // trying to go backward, if it's encoder count is equal to or below the minimum
+        // it stops. If both are false, power stays the same.
+        extensionMotor.set(((extensionMotor.get() < 0 && currentExtensionEncoderCount <= minExtensionEncoderCount)
+                || (extensionMotor.get() > 0 && currentExtensionEncoderCount >= maxExtensionEncoderCount)) ? 0 : power);
+
+        extensionPower = power;
 
         updateDS();
     }
 
+    // Same as extension but for rotation
     public void rotateArm(double power) {
-        rotationMotor.set(power);
-        rotationPower = power;
-
         currentRotationEncoderCount = rotationMotorEncoder.get();
 
-        if ((minRotationEncoderCount >= currentRotationEncoderCount && rotationMotor.get() < 0)
-                || (maxRotationEncoderCount <= currentRotationEncoderCount && rotationMotor.get() > 0))
-            rotationMotor.set(0);
+        rotationMotor.set(((rotationMotor.get() < 0 && currentRotationEncoderCount <= minRotationEncoderCount)
+                || (rotationMotor.get() > 0 && currentRotationEncoderCount >= maxRotationEncoderCount)) ? 0 : power);
+
+        rotationPower = power;
 
         updateDS();
     }
 }
+
+// IN PROGRESS IDEAS
+/*
+ * Turn into 2 subsystems to make parallel running easier
+ * move "intelligent" logic into a command
+ */

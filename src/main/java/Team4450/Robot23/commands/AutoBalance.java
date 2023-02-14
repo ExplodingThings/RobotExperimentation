@@ -12,7 +12,7 @@ public class AutoBalance extends CommandBase {
     private DriveBase driveBase;
 
     private double pitch; // Rotation around x axis
-    private double yaw; // Rotation around y axis
+    private double yaw; // Rotation around z axis
 
     private SynchronousPID pidController;
 
@@ -20,20 +20,25 @@ public class AutoBalance extends CommandBase {
         this.driveBase = driveBase;
     }
 
+    public void initialize() {
+        resetYaw();
+    }
+
     private void recalibrateRotation() {
-        pitch = RobotContainer.navx.getAHRS().getPitch();
-        yaw = RobotContainer.navx.getAHRS().getYaw();
+        // Adding 180 because getPitch() and getYaw() go from -180 to 180,but im
+        // treating it in the code as 0 to 360, and I don't want to edit it
+        pitch = RobotContainer.navx.getAHRS().getPitch() + 180;
+        yaw = RobotContainer.navx.getAHRS().getYaw() + 180;
     }
 
     // USING WHILES BECAUSE WE DONT WANT IT TO CONTINUE UNTIL THAT STAGE IS FINISHED
 
-    public void resetYaw() {
+    public void resetYaw() { // YAW WILL HAVE TO BE CHANGED BECAUSE SWERVE DRIVES DON'T WORK WITH IT
         recalibrateRotation();
         double rotationTarget = 0;
         boolean calculateRotation = false;
 
-        // While the robot rotation is not a multiple of 180 (this will either be 0 or
-        // 180, as 360 reverts back to 0) continue rotation
+        // While the robot rotation is not a multiple of 180 continue rotation
         while (Math.abs(yaw) % 180 != 0)
             if (calculateRotation) {
                 // if closer to 180, move to 180, else to 0
@@ -60,9 +65,8 @@ public class AutoBalance extends CommandBase {
         // then it skips this, and if its on top of the ramp then it will get off, but
         // the rest will move it back on. Also, why would this be called if we already
         // flat on charging station?
+        driveBase.setPower(speed, speed);
         while (Math.abs(pitch) <= leeway) {
-            driveBase.setPower(speed, speed);
-
             recalibrateRotation();
         }
 
@@ -71,14 +75,18 @@ public class AutoBalance extends CommandBase {
         // it's negative the front of the robot is tilted down which means it needs to
         // move backward, if it spositive the front of the robot is tilted up which
         // means it needs to move forward.
-        while (Math.abs(pitch) > leeway) {
-            speed = (pitch - 180) > 0 ? 1 : -1;
-            driveBase.setPower(speed, speed);
+        speed = (pitch - 180) > 0 ? 1 : -1;
+        driveBase.setPower(speed, speed);
 
+        while (Math.abs(pitch) > leeway) {
             recalibrateRotation();
         }
 
         // All the qualifications have been completed, so it stops the robot motors.
         driveBase.setPower(0, 0);
     }
+
+    // THIS IS A PRESS AND RUN ONCE COMMAND, ONCE THE PREVIOUS METHOD IS DONE
+    // NOTHING HAPPENS. THIS MEANS I DO NOT MAKE A execute(), end(), AND
+    // isFinished()
 }

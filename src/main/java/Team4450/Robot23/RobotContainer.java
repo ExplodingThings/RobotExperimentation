@@ -185,7 +185,7 @@ public class RobotContainer
         shooter = new Shooter(channel);
         pickup = new Pickup();
 		climber = new Climber();
-		claw = new Claw(0.0, Pid.on);
+		claw = new Claw();
 		arm = new Arm();
 
 		// Create any persistent commands.
